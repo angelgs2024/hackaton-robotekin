@@ -1,0 +1,21 @@
+[workspace]
+channels = ["conda-forge"]
+name = "lerobot_so101"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+mando = "python controlar_ps4.py"
+mando-test = "python controlar_ps4.py --probar-mando"
+
+[dependencies]
+python = "3.12.*"
+ffmpeg = ">=9.0.2,<10"
+git = ">=2.55.0,<3"
+git-lfs = ">=3.8.0,<4"
+
+[pypi-dependencies]
+lerobot = { version = ">=0.6.1, <0.7", extras = ["core-scripts", "feetech", "training"] }
+mujoco = ">=3.13.0, <4"
+so101-nexus = ">=0.7.0, <0.8"
+evdev = ">=2.0.0, <3"
