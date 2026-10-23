@@ -65,7 +65,6 @@ class Escucha(Node):
                 if rec.AcceptWaveform(datos):
                     texto = json.loads(rec.Result())["text"]
                     if texto:
-                        print(f"🧑 {texto}", flush=True)
                         return texto
         return json.loads(rec.FinalResult())["text"]
 

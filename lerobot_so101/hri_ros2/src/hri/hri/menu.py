@@ -3,7 +3,7 @@
 # clave: (cómo lo dice el robot, palabras que entiende)
 COMIDAS = {
     "chuleton": ("chuletón de vaca", ["chuleton", "carne", "vaca"]),
-    "merluza": ("merluza", ["merluza", "pescado"]),
+    "sopa": ("sopa", ["sopa"]),
 }
 BEBIDAS = {
     "agua": ("agua", ["agua"]),

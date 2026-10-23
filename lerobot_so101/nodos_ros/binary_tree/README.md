@@ -42,7 +42,7 @@ preparado» y después al aviso de escucha. Esa comparación no garantiza el mis
 resultado en el ruido de tu sala.
 
 Escucha la pregunta del robot. Cuando aparezca `🎤 escuchando...`, di
-«quiero merluza y agua». Cuando te pida confirmación y vuelva a escuchar,
+«quiero sopa y agua». Cuando te pida confirmación y vuelva a escuchar,
 di «sí». El pedido confirmado se guarda en la blackboard y se muestra en la
 terminal. Los dispositivos de entrada y salida son los predeterminados del
 escritorio; el arranque configura ALSA para usar los plugins de audio del sistema.

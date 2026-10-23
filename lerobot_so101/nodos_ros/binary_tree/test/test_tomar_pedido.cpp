@@ -115,7 +115,7 @@ TEST_F(PedidoTest, MissingHriTimesOutAndClearsPreviousOrder)
 
 TEST_F(PedidoTest, RetainedOrderDoesNotCompleteNewConversation)
 {
-  publish("merluza,cocacola");
+  publish("sopa,cocacola");
   auto tree = makeTree(0.5);
   ASSERT_TRUE(waitForStart(tree));
   EXPECT_EQ(result(tree), BT::NodeStatus::FAILURE);
@@ -127,7 +127,7 @@ TEST_F(PedidoTest, HaltDiscardsPendingOrder)
   auto tree = makeTree();
   ASSERT_TRUE(waitForStart(tree));
   tree.haltTree();
-  publish("merluza,cocacola");
+  publish("sopa,cocacola");
   for (int i = 0; i < 10; ++i) {
     rclcpp::spin_some(node);
     std::this_thread::sleep_for(10ms);
