@@ -1,0 +1,5 @@
+#!@Python3_EXECUTABLE@
+from binary_tree_hri.@hri_node@ import main
+
+if __name__ == "__main__":
+    main()

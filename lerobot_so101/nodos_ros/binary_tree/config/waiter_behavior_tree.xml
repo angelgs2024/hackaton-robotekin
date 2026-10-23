@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="WaiterBehavior">
+  <BehaviorTree ID="WaiterBehavior">
+    <TomarPedido comida="{food_order}" bebida="{drink_order}"
+                 pedido="{order}" timeout="120"/>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <Action ID="TomarPedido">
+      <input_port name="timeout" default="120"/>
+      <output_port name="comida"/>
+      <output_port name="bebida"/>
+      <output_port name="pedido"/>
+    </Action>
+  </TreeNodesModel>
+</root>
