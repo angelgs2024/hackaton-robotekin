@@ -11,6 +11,10 @@ platforms = ["linux-64"]
 [tasks]
 mando = "python controlar_ps4.py"
 mando-test = "python controlar_ps4.py --probar-mando"
+build = { cmd = "colcon build", cwd = "../hri_ros2" }
+modelo = { cmd = "mkdir -p models && cd models && curl -fLO https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip && unzip -o vosk-model-small-es-0.42.zip && python -m piper.download_voices es_ES-davefx-medium", cwd = "../hri_ros2" }
+hri = { cmd = "bash hri.sh voz", cwd = "../hri_ros2", depends-on = ["build"] }
+probar = { cmd = "bash hri.sh teclado", cwd = "../hri_ros2", depends-on = ["build"] }
 
 [dependencies]
 python = "3.12.*"
@@ -19,6 +23,12 @@ git = ">=2.55.0,<3"
 git-lfs = ">=3.8.0,<4"
 numpy = ">=2.0,<2.3"
 ros-jazzy-desktop = ">=0.11.0,<0.12"
+colcon-common-extensions = "*"
+setuptools = ">=71,<82"
+python-sounddevice = "*"
+portaudio = "*"
+curl = "*"
+unzip = "*"
 
 
 [constraints]
@@ -34,3 +44,7 @@ mujoco = ">=3.13.0,<4"
 so101-nexus = ">=0.7.0,<0.8"
 evdev = ">=2.0.0,<3"
 opencv-python-headless = ">=4.9,<4.14"
+
+vosk = "*"
+piper-tts = "*"
+pyttsx3 = ">=2.99,<3"
