@@ -43,7 +43,7 @@ def main():
 
     timer.timeout.connect(spin)
     timer.start(20)
-    bridge.window.show()
+    bridge.window.showFullScreen()
     # Procesa el primer pintado antes de permitir el arranque de HRI y del BT.
     app.processEvents()
     print('BINARY_TREE_GUI_READY', flush=True)

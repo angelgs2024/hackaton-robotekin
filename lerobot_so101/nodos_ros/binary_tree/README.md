@@ -21,8 +21,8 @@ binary_tree/
 
 ## Interfaz gráfica y modos de pedido
 
-La ventana PyQt6 se abre primero, antes de cargar los modelos e iniciar HRI
-y el árbol. Desde la raíz del repositorio:
+La ventana PyQt6 se abre primero y directamente a pantalla completa, antes de
+cargar los modelos e iniciar HRI y el árbol. Desde la raíz del repositorio:
 
 ```bash
 pixi run pedido                # voz + visualización del pedido

@@ -197,5 +197,5 @@ if __name__ == '__main__':
         print("⚠️ ADVERTENCIA: No se encontró la imagen en 'assets/images/restaurant_bg.png'. Se usará degradado Frutiger Aero de respaldo.")
 
     window = MainWindow()
-    window.show()
+    window.showFullScreen()
     sys.exit(app.exec())
