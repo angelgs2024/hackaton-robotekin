@@ -1,0 +1,5 @@
+#!@Python3_EXECUTABLE@
+from binary_tree_gui.main import main
+
+if __name__ == "__main__":
+    main()

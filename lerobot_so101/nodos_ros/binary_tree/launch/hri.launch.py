@@ -1,6 +1,5 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
@@ -10,8 +9,6 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     models = PathJoinSubstitution([FindPackageShare('binary_tree'), 'models'])
     return LaunchDescription([
-        DeclareLaunchArgument('escucha_externa', default_value='false',
-                              description='La escucha se ejecuta aparte con acceso a la terminal'),
         DeclareLaunchArgument('microfono', default_value='-1',
                               description='Índice de entrada PortAudio; -1 usa la predeterminada'),
         DeclareLaunchArgument('modelo', default_value=PathJoinSubstitution([
@@ -21,8 +18,7 @@ def generate_launch_description():
         Node(package='binary_tree', executable='pregunta', output='screen',
              parameters=[{'voz': LaunchConfiguration('voz')}]),
         Node(package='binary_tree', executable='escucha', output='screen',
-             condition=UnlessCondition(LaunchConfiguration('escucha_externa')),
-             parameters=[{'modo': 'voz', 'modelo': LaunchConfiguration('modelo'),
+             parameters=[{'modelo': LaunchConfiguration('modelo'),
                           'microfono': ParameterValue(LaunchConfiguration('microfono'), value_type=int)}]),
         Node(package='binary_tree', executable='confirma', output='screen'),
     ])

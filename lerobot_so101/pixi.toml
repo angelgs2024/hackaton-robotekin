@@ -17,8 +17,8 @@ build = { cmd = "colcon build", cwd = "../hri_ros2" }
 modelo = { cmd = "mkdir -p models && cd models && curl -fLO https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip && unzip -o vosk-model-small-es-0.42.zip && python -m piper.download_voices es_ES-davefx-medium", cwd = "../hri_ros2" }
 hri = { cmd = "bash hri.sh voz", cwd = "../hri_ros2", depends-on = ["build"] }
 probar = { cmd = "bash hri.sh teclado", cwd = "../hri_ros2", depends-on = ["build"] }
-gui = "python MAIN/main.py"
-test = "python MAIN/tests/run_tests.py"
+gui = { cmd = "bash nodos_ros/binary_tree/scripts/run_gui.sh", depends-on = ["pedido-build"] }
+test = { cmd = "bash nodos_ros/binary_tree/scripts/run_gui.sh --test", depends-on = ["pedido-build"] }
 
 [dependencies]
 python = "3.12.*"

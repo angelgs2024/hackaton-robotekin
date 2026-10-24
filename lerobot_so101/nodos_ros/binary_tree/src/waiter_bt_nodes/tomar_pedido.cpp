@@ -7,6 +7,9 @@ TomarPedido::TomarPedido(const std::string & name, const BT::NodeConfig & config
   rclcpp::Node::SharedPtr node)
 : BT::StatefulActionNode(name, config), node_(std::move(node))
 {
+  if (!node_->has_parameter("interface_mode")) {
+    node_->declare_parameter<bool>("interface_mode", false);
+  }
   empezar_ = node_->create_publisher<std_msgs::msg::Empty>("/hri/empezar", 10);
   // Volatile: do not receive the retained order from a previous conversation.
   pedido_sub_ = node_->create_subscription<std_msgs::msg::String>(
@@ -57,11 +60,14 @@ BT::NodeStatus TomarPedido::onRunning()
     return BT::NodeStatus::FAILURE;
   }
 
-  // Wait for pregunta, escucha and confirma before starting the conversation.
-  if (!enviado_ && empezar_->get_subscription_count() >= 2 &&
-    pedido_sub_->get_publisher_count() > 0 &&
-    node_->count_subscribers("/hri/escuchar") > 0 &&
-    node_->count_subscribers("/hri/oido") > 0)
+  const bool interface_mode = node_->get_parameter("interface_mode").as_bool();
+  // Voice mode also includes the GUI subscribers; they must not stand in for
+  // pregunta/escucha while the audio models are still loading.
+  const bool input_ready = interface_mode ? empezar_->get_subscription_count() >= 1 :
+    (empezar_->get_subscription_count() >= 3 &&
+    node_->count_subscribers("/hri/escuchar") >= 2 &&
+    node_->count_subscribers("/hri/oido") > 0);
+  if (!enviado_ && input_ready && pedido_sub_->get_publisher_count() > 0)
   {
     enviado_ = true;
     empezar_->publish(std_msgs::msg::Empty{});

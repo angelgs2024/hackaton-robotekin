@@ -4,6 +4,7 @@ CONFIRMA — entiende al cliente y confirma el pedido.
 Escucha:  /hri/oido      (String)  <- lo que ha oído el nodo escucha
 Publica:  /hri/preguntar (String)  -> para seguir la conversación
           /hri/decir     (String)  -> mensaje final
+          /hri/seleccion (String)  -> comida,bebida provisionales para la interfaz
           /hri/pedido    (String)  -> "chuleton,agua" al confirmar (para Manipulación)
 """
 import unicodedata
@@ -41,6 +42,7 @@ class Confirma(Node):
         self.pub_decir = self.create_publisher(String, "/hri/decir", 10)
         latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.pub_pedido = self.create_publisher(String, "/hri/pedido", latched)
+        self.pub_seleccion = self.create_publisher(String, "/hri/seleccion", latched)
         self.create_subscription(String, "/hri/oido", lambda m: self.oido(m.data), 10)
         self.create_subscription(Empty, "/hri/empezar", lambda _: self.reiniciar(), 10)
         self.reiniciar()
@@ -48,11 +50,18 @@ class Confirma(Node):
     def reiniciar(self):
         self.comida = self.bebida = None
         self.confirmando = False
+        self.terminado = False
+        self.publicar_seleccion()
+
+    def publicar_seleccion(self):
+        self.pub_seleccion.publish(String(data=f"{self.comida or ''},{self.bebida or ''}"))
 
     def preguntar(self, texto):
         self.pub_preguntar.publish(String(data=texto))
 
     def oido(self, texto):
+        if self.terminado:
+            return
         if not texto.strip():
             return self.preguntar("¿Perdone? No le he oído.")
 
@@ -61,12 +70,16 @@ class Confirma(Node):
                 self.pub_decir.publish(String(data="¡Perfecto! Ahora mismo le preparo la mesa."))
                 self.pub_pedido.publish(String(data=f"{self.comida},{self.bebida}"))
                 self.get_logger().info(f"Pedido: {self.comida},{self.bebida}")
+                self.terminado = True
+                return
             else:
+                self.reiniciar()
                 self.preguntar("Vale, dígame otra vez qué quiere.")
-            return self.reiniciar()
+            return
 
         self.comida = self.comida or buscar(texto, COMIDAS)
         self.bebida = self.bebida or buscar(texto, BEBIDAS)
+        self.publicar_seleccion()
         if self.comida and self.bebida:
             self.confirmando = True
             self.preguntar(f"Entonces, {COMIDAS[self.comida][0]} y {BEBIDAS[self.bebida][0]}. ¿Es correcto?")

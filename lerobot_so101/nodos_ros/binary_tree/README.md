@@ -8,6 +8,9 @@ No necesita el paquete ROS `hri` ni `hri_example` para compilar o ejecutar.
 ```text
 binary_tree/
   hri/                       # pregunta.py, escucha.py, confirma.py, menu.py
+  gui/                       # interfaz PyQt6: ventana, componentes, estilos y rutas
+  assets/images/             # fondo, platos, bebidas y cubiertos
+  test/gui/                  # pruebas de la interfaz
   scripts/hri_node.in         # genera los tres ejecutables ROS al compilar
   include/binary_tree/waiter_bt_nodes/tomar_pedido.hpp
   src/waiter_bt_nodes/tomar_pedido.cpp
@@ -15,6 +18,46 @@ binary_tree/
   launch/hri.launch.py
   launch/waiter_behavior.py
 ```
+
+## Interfaz gráfica y modos de pedido
+
+La ventana PyQt6 se abre primero, antes de cargar los modelos e iniciar HRI
+y el árbol. Desde la raíz del repositorio:
+
+```bash
+pixi run pedido                # voz + visualización del pedido
+pixi run pedido --interface    # selección y confirmación mediante botones
+```
+
+En modo voz, di «chuletón de vaca y agua»: se iluminan esas opciones y aparecen
+sus imágenes. También puedes decir primero la comida y después la bebida.
+El pedido solo se confirma al responder «sí»; si respondes «no», se limpia
+la selección para empezar de nuevo. Los botones no admiten cambios en modo voz.
+
+Con `--interface`, selecciona una comida (chuletón o sopa) y una bebida (agua
+o Coca-Cola). **Confirmar Comanda** se habilita únicamente cuando están ambas
+seleccionadas. Elegir «Plato vacío» o «Vaso vacío» vuelve a deshabilitarlo.
+Al confirmar se publica un único pedido y se guarda en la misma blackboard
+que en modo voz. Este modo no carga Vosk ni Piper y no usa el micrófono.
+El antiguo argumento de teclado se ha eliminado.
+
+`pixi run gui` también abre el programa completo en modo botones. La ventana
+permanece visible al acabar el pedido; **Salir**, Esc o Ctrl+C cierran el programa
+y sus nodos. Para otro pedido, vuelve a ejecutar el comando.
+
+El módulo `binary_tree_gui` usa las imágenes de `binary_tree/assets/images`
+en desarrollo y `share/binary_tree/assets/images` al instalar. No depende de
+`MAIN` ni del directorio actual. La copia original de `MAIN` se conserva.
+
+Pruebas de interfaz y de integración ROS sin abrir ventanas ni usar audio:
+
+```bash
+pixi run test
+```
+
+La interfaz recibe `/hri/seleccion` para mostrar el pedido provisional y
+`/hri/pedido` para mostrar el confirmado. En modo botones publica directamente
+`/hri/pedido`. Las imágenes representan la selección; no se envían órdenes al brazo.
 
 `hri/` se instala como módulo Python `binary_tree_hri` dentro del mismo paquete
 ROS `binary_tree`. El árbol predeterminado contiene solo `TomarPedido` y termina
@@ -30,7 +73,7 @@ pixi run pedido
 
 El comando usa el entorno Pixi del proyecto, descarga los modelos de Vosk y
 Piper si faltan, compila `binary_tree` en `nodos_ros` y arranca el árbol junto
-con `pregunta`, `escucha` y `confirma`. No necesitas crear `.venv-hri` ni cargar
+con la interfaz, `pregunta`, `escucha` y `confirma`. No necesitas crear `.venv-hri` ni cargar
 el ROS de `/opt/ros` para este comando. La primera ejecución necesita internet;
 las siguientes reutilizan los modelos locales.
 
@@ -48,9 +91,9 @@ terminal. Los dispositivos de entrada y salida son los predeterminados del
 escritorio; el arranque configura ALSA para usar los plugins de audio del sistema.
 
 Las preguntas usan la voz natural en español de Piper, con el ritmo y la
-entonación del modelo y el efecto metálico desactivado, también con `--keyboard`.
+entonación del modelo y el efecto metálico desactivado.
 
-Al terminar, pulsa Ctrl+C para cerrar los nodos antes de iniciar otro pedido.
+Al terminar, cierra la ventana o pulsa Ctrl+C antes de iniciar otro pedido.
 
 Si el ruido son otras personas hablando, el modelo también puede transcribirlas.
 Acerca el micrófono a tu boca; un micrófono de auriculares o direccional ayuda
@@ -79,7 +122,8 @@ pixi run pedido-build
              pedido="{order}" timeout="120"/>
 ```
 
-La acción espera a los tres nodos HRI, publica `/hri/empezar` y permanece en
+La acción espera a la interfaz y, en modo voz, a los tres nodos HRI;
+publica `/hri/empezar` y permanece en
 `RUNNING` hasta recibir `/hri/pedido`. Solo el pedido confirmado produce
 `SUCCESS`. Un mensaje mal formado o superar `timeout` segundos produce `FAILURE`.
 El plazo incluye la espera al arranque de HRI.
@@ -140,36 +184,14 @@ ros2 launch binary_tree waiter_behavior.py \
   voz:=/ruta/es_ES-davefx-medium.onnx
 ```
 
-Este lanzamiento arranca `pregunta`, `escucha`, `confirma` y `waiter_behavior_bt`.
-El árbol inicia la conversación en cuanto HRI está preparado; no ejecutes además
-el antiguo `hri.sh`, porque arrancaría otra copia de los nodos.
-
-## Tomar el pedido por teclado, con preguntas habladas
-
-```bash
-pixi run pedido --keyboard
-```
-
-El robot saluda, pregunta y confirma en voz alta exactamente como en modo voz.
-Cuando aparezca `🧑`, escribe el pedido, pulsa Enter y después responde `sí`
-cuando pida confirmación. Solo cambia la entrada: usa la terminal en lugar del
-micrófono. El pedido termina en la misma blackboard.
-
-Este modo prepara Piper para hablar, pero no descarga ni carga Vosk. Pulsa
-Ctrl+C para cerrar los nodos al terminar. Sin `--keyboard` se usa el micrófono.
-
-### Arranque manual en terminales separadas
-
-Después de cargar `install/setup.bash` en cada terminal, ejecuta cada línea en
-una terminal distinta. El modo teclado necesita una terminal con entrada:
+Este lanzamiento abre primero la interfaz y después arranca `pregunta`,
+`escucha`, `confirma` y `waiter_behavior_bt`. El árbol inicia la conversación
+cuando los nodos están preparados; no ejecutes además el antiguo `hri.sh`.
+Para el modo botones desde ROS:
 
 ```bash
-ros2 run binary_tree pregunta
-ros2 run binary_tree escucha --ros-args -p modo:=teclado
-ros2 run binary_tree confirma
-ros2 run binary_tree waiter_behavior_bt
+ros2 launch binary_tree waiter_behavior.py interface:=true
 ```
 
-En la terminal de `escucha`, escribe `chuleton y agua` y después `sí`.
-El árbol mostrará `Order saved to blackboard: chuleton,agua` y terminará con éxito.
-`pregunta` usa la voz disponible o muestra el texto si no hay motor de voz.
+El ejecutable `interfaz` es la ventana con su puente ROS; utiliza el lanzamiento
+anterior para arrancar también el árbol y completar el pedido en la blackboard.

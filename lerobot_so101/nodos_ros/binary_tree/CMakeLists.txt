@@ -59,6 +59,16 @@ foreach(hri_node pregunta escucha confirma)
     DESTINATION lib/${PROJECT_NAME})
 endforeach()
 
+# GUI integrada: código Python e imágenes independientes del directorio actual.
+ament_python_install_package(binary_tree_gui PACKAGE_DIR gui)
+configure_file(scripts/gui_node.in ${CMAKE_CURRENT_BINARY_DIR}/interfaz
+  @ONLY
+  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                   GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/interfaz
+  DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY assets DESTINATION share/${PROJECT_NAME})
+
 # Models can travel with the package, or be supplied as absolute launch arguments.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/models")
   install(DIRECTORY models DESTINATION share/${PROJECT_NAME})

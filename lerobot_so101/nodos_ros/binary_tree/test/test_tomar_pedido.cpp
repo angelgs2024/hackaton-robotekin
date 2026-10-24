@@ -24,6 +24,10 @@ protected:
       "/hri/escuchar", 10, [](std_msgs::msg::Empty::ConstSharedPtr) {});
     heard_sub = node->create_subscription<std_msgs::msg::String>(
       "/hri/oido", 10, [](std_msgs::msg::String::ConstSharedPtr) {});
+    gui_start_sub = node->create_subscription<std_msgs::msg::Empty>(
+      "/hri/empezar", 10, [](std_msgs::msg::Empty::ConstSharedPtr) {});
+    gui_listen_sub = node->create_subscription<std_msgs::msg::Empty>(
+      "/hri/escuchar", 10, [](std_msgs::msg::Empty::ConstSharedPtr) {});
     factory.registerBuilder<TomarPedido>("TomarPedido",
       [this](const std::string & name, const BT::NodeConfig & config) {
         return std::make_unique<TomarPedido>(name, config, node);
@@ -76,6 +80,7 @@ protected:
   rclcpp::Node::SharedPtr node;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pedido_pub;
   rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr start_sub, reset_sub, listen_sub;
+  rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr gui_start_sub, gui_listen_sub;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr heard_sub;
   BT::BehaviorTreeFactory factory;
   int starts = 0;
@@ -92,6 +97,32 @@ TEST_F(PedidoTest, ConfirmedOrderPopulatesBlackboard)
   EXPECT_EQ(bb->get<std::string>("drink_order"), "agua");
   EXPECT_EQ(bb->get<std::string>("order"), "chuleton,agua");
   EXPECT_EQ(starts, 1);
+}
+
+TEST_F(PedidoTest, InterfaceOrderPopulatesSameBlackboardWithoutVoiceNodes)
+{
+  node->declare_parameter<bool>("interface_mode", true);
+  reset_sub.reset();
+  listen_sub.reset();
+  heard_sub.reset();
+  gui_start_sub.reset();
+  gui_listen_sub.reset();
+  auto tree = makeTree();
+  ASSERT_TRUE(waitForStart(tree));
+  publish("sopa,cocacola");
+  ASSERT_EQ(result(tree), BT::NodeStatus::SUCCESS);
+  auto bb = tree.rootBlackboard();
+  EXPECT_EQ(bb->get<std::string>("food_order"), "sopa");
+  EXPECT_EQ(bb->get<std::string>("drink_order"), "cocacola");
+  EXPECT_EQ(bb->get<std::string>("order"), "sopa,cocacola");
+}
+
+TEST_F(PedidoTest, GuiDoesNotReplacePreguntaWhileVoiceLoads)
+{
+  reset_sub.reset();
+  auto tree = makeTree(0.1);
+  EXPECT_EQ(result(tree), BT::NodeStatus::FAILURE);
+  EXPECT_EQ(starts, 0);
 }
 
 TEST_F(PedidoTest, MalformedOrderFailsWithoutOutputs)

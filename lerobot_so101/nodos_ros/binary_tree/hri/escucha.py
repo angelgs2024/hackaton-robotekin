@@ -4,7 +4,7 @@ ESCUCHA — el oído del robot.
 Escucha:  /hri/escuchar (Empty)   -> escucha una frase
 Publica:  /hri/oido     (String)  -> lo que ha entendido ("" si nada)
 
-Parámetro modo: "voz" (micrófono con Vosk) o "teclado" (para probar).
+Reconocimiento de voz con micrófono y Vosk.
 Parámetro microfono: índice de PortAudio; -1 usa la entrada predeterminada.
 """
 import json
@@ -20,31 +20,23 @@ from std_msgs.msg import Empty, String
 class Escucha(Node):
     def __init__(self):
         super().__init__("escucha")
-        self.modo = self.declare_parameter("modo", "voz").value
         self.microfono_id = self.declare_parameter("microfono", -1).value
         modelo = self.declare_parameter("modelo", "models/vosk-model-es-0.42").value
-        if self.modo == "voz":
-            import sounddevice
-            import vosk
-            vosk.SetLogLevel(-1)
-            self.sd, self.vosk = sounddevice, vosk
-            self.get_logger().info(f"Cargando reconocimiento de voz: {modelo}")
-            self.modelo = vosk.Model(modelo)
-            self.get_logger().info("Modelo de voz preparado")
+        import sounddevice
+        import vosk
+        vosk.SetLogLevel(-1)
+        self.sd, self.vosk = sounddevice, vosk
+        self.get_logger().info(f"Cargando reconocimiento de voz: {modelo}")
+        self.modelo = vosk.Model(modelo)
+        self.get_logger().info("Modelo de voz preparado")
 
         self.oido = self.create_publisher(String, "/hri/oido", 10)
         self.create_subscription(Empty, "/hri/escuchar", lambda _: self.escuchar(), 10)
 
     def escuchar(self):
-        texto = self.teclado() if self.modo == "teclado" else self.microfono()
+        texto = self.microfono()
         if rclpy.ok():
             self.oido.publish(String(data=texto))
-
-    def teclado(self):
-        try:
-            return input("🧑 ")
-        except EOFError:
-            raise SystemExit("Entrada de teclado cerrada antes de completar el pedido.")
 
     def microfono(self, segundos=12):
         entrada = None if self.microfono_id < 0 else self.microfono_id
