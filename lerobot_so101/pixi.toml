@@ -9,8 +9,6 @@ channels = [
 platforms = ["linux-64"]
 
 [tasks]
-mando = "python controlar_ps4.py"
-mando-test = "python controlar_ps4.py --probar-mando"
 pedido-modelos = "bash nodos_ros/binary_tree/scripts/prepare_models.sh"
 pedido-microfonos = "bash nodos_ros/binary_tree/scripts/run_voice.sh --listar-microfonos"
 pedido-build = { cmd = "colcon build --packages-select binary_tree --symlink-install --cmake-args -DPython3_EXECUTABLE=$CONDA_PREFIX/bin/python -DBUILD_TESTING=ON", cwd = "nodos_ros" }
@@ -19,6 +17,8 @@ build = { cmd = "colcon build", cwd = "../hri_ros2" }
 modelo = { cmd = "mkdir -p models && cd models && curl -fLO https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip && unzip -o vosk-model-small-es-0.42.zip && python -m piper.download_voices es_ES-davefx-medium", cwd = "../hri_ros2" }
 hri = { cmd = "bash hri.sh voz", cwd = "../hri_ros2", depends-on = ["build"] }
 probar = { cmd = "bash hri.sh teclado", cwd = "../hri_ros2", depends-on = ["build"] }
+gui = "python MAIN/main.py"
+test = "python MAIN/tests/run_tests.py"
 
 [dependencies]
 python = "3.12.*"
@@ -49,7 +49,9 @@ mujoco = ">=3.13.0,<4"
 so101-nexus = ">=0.7.0,<0.8"
 evdev = ">=2.0.0,<3"
 opencv-python-headless = ">=4.9,<4.14"
-
+PyQt6 = "*"
+sounddevice = "*"
+faster-whisper = "*"
 vosk = "*"
 piper-tts = "*"
 pyttsx3 = ">=2.99,<3"
