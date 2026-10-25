@@ -14,6 +14,7 @@
 
 #include "binary_tree/waiter_bt_nodes/bt_node_registration.hpp"
 #include "binary_tree/waiter_bt_nodes/tomar_pedido.hpp"
+#include "binary_tree/waiter_bt_nodes/ejecutar_modelo.hpp"
 
 void register_bt_nodes(
   BT::BehaviorTreeFactory & factory,
@@ -24,5 +25,15 @@ void register_bt_nodes(
     "TomarPedido",
     [node](const std::string & name, const BT::NodeConfig & config) {
       return std::make_unique<TomarPedido>(name, config, node);
+    });
+  factory.registerBuilder<EjecutarModelo>(
+    "PrepararModelos",
+    [node](const std::string & name, const BT::NodeConfig & config) {
+      return std::make_unique<EjecutarModelo>(name, config, node, true);
+    });
+  factory.registerBuilder<EjecutarModelo>(
+    "EjecutarModelo",
+    [node](const std::string & name, const BT::NodeConfig & config) {
+      return std::make_unique<EjecutarModelo>(name, config, node);
     });
 }

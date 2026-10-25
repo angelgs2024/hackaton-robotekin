@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Ejecutor de la suite completa de pruebas para la GUI de Vitoria.
-Descubre y ejecuta todos los tests de test/gui en modo headless ('offscreen').
+Ejecutor de las pruebas de interfaz, HRI y secuencia LeRobot.
+Descubre las pruebas de test/ en modo headless, sin audio ni robot real.
 """
 import os
 import sys
@@ -13,11 +13,11 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("ROS_DOMAIN_ID", "117")
 
 # Asegurar rutas
-TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def run():
     print("=" * 60)
-    print("🚀 EJECUTANDO SUITE DE PRUEBAS - VITORIA HRI GUI")
+    print("🚀 EJECUTANDO SUITE DE PRUEBAS - HRI + GUI + LEROBOT")
     print("=" * 60)
     
     loader = unittest.TestLoader()

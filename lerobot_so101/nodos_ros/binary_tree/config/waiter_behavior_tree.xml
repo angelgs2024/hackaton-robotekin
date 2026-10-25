@@ -1,8 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" main_tree_to_execute="WaiterBehavior">
   <BehaviorTree ID="WaiterBehavior">
-    <TomarPedido comida="{food_order}" bebida="{drink_order}"
-                 pedido="{order}" timeout="120"/>
+    <Sequence name="TomarYServirPedido">
+      <TomarPedido comida="{food_order}" bebida="{drink_order}"
+                   pedido="{order}" timeout="120"/>
+      <!-- Valida todos los modelos necesarios antes de ejecutar el primero. -->
+      <PrepararModelos comida="{food_order}" bebida="{drink_order}"/>
+      <!-- Espera 5 segundos antes de cada vaso o cubierto, también en test. -->
+      <!-- Todos los pedidos usan ahora el vaso amarillo. -->
+      <Delay delay_msec="5000">
+        <EjecutarModelo modelo="coger_vaso_amarillo"/>
+      </Delay>
+      <Switch2 variable="{food_order}" case_1="chuleton" case_2="sopa">
+        <Delay delay_msec="5000">
+          <EjecutarModelo modelo="coger_tenedor"/>
+        </Delay>
+        <Delay delay_msec="5000">
+          <EjecutarModelo modelo="coger_cuchara"/>
+        </Delay>
+        <AlwaysFailure/>
+      </Switch2>
+    </Sequence>
   </BehaviorTree>
 
   <TreeNodesModel>
@@ -11,6 +29,13 @@
       <output_port name="comida"/>
       <output_port name="bebida"/>
       <output_port name="pedido"/>
+    </Action>
+    <Action ID="PrepararModelos">
+      <input_port name="comida"/>
+      <input_port name="bebida"/>
+    </Action>
+    <Action ID="EjecutarModelo">
+      <input_port name="modelo"/>
     </Action>
   </TreeNodesModel>
 </root>

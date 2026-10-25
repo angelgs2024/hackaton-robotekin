@@ -65,7 +65,7 @@ class CutleryWidget(QWidget):
         """Muestra los cubiertos adecuados para el plato seleccionado."""
         visible_items = {
             "sopa": {"cuchara"},
-            "chuleton": {"cuchillo", "tenedor"},
+            "chuleton": {"tenedor"},
         }.get(dish_id, set())
         for name, label in self._labels.items():
             label.setVisible(name in visible_items)

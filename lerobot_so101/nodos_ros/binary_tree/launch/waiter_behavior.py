@@ -23,19 +23,21 @@ def generate_launch_description():
     )
     waiter = Node(
         package='binary_tree', executable='waiter_behavior_bt', output='screen',
-        parameters=[{'interface_mode': ParameterValue(mode, value_type=bool)}],
+        parameters=[{'interface_mode': ParameterValue(mode, value_type=bool),
+                     'modelos_xml': LaunchConfiguration('modelos_xml'),
+                     'simular_modelos': ParameterValue(LaunchConfiguration('simular_modelos'), value_type=bool),
+                     'model_timeout': ParameterValue(LaunchConfiguration('model_timeout'), value_type=float)}],
     )
     hri = IncludeLaunchDescription(PythonLaunchDescriptionSource(
         PathJoinSubstitution([FindPackageShare('binary_tree'), 'launch', 'hri.launch.py'])
     ))
 
     def start(context):
-        if mode.perform(context).lower() == 'true':
-            return [waiter]
         script = LaunchConfiguration('preparar_modelos').perform(context)
         if not script:
             return [hri, waiter]
-        prepare = ExecuteProcess(cmd=['bash', script], output='screen')
+        args = ['--tts-only'] if mode.perform(context).lower() == 'true' else []
+        prepare = ExecuteProcess(cmd=['bash', script, *args], output='screen')
 
         def prepared(event, _context):
             if event.returncode != 0:
@@ -61,6 +63,12 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('interface', default_value='false', choices=['true', 'false'],
                               description='Elegir y confirmar el pedido con botones'),
+        DeclareLaunchArgument('modelos_xml', default_value=PathJoinSubstitution([
+            FindPackageShare('binary_tree'), 'config', 'lerobot_models.xml'])),
+        DeclareLaunchArgument('simular_modelos', default_value='false', choices=['true', 'false'],
+                              description='Mostrar la secuencia sin conectar al robot ni cargar políticas'),
+        DeclareLaunchArgument('model_timeout', default_value='300.0',
+                              description='Tiempo máximo por proceso, incluida la carga del modelo'),
         DeclareLaunchArgument('preparar_modelos', default_value='',
                               description='Script opcional para preparar modelos tras abrir la ventana'),
         DeclareLaunchArgument('microfono', default_value='-1',

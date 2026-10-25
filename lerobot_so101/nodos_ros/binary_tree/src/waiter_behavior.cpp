@@ -16,6 +16,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/bt_cout_logger.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include "binary_tree/waiter_bt_nodes/bt_node_registration.hpp"
 
@@ -23,6 +24,8 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<rclcpp::Node>("waiter_behavior_bt");
+  node->declare_parameter<bool>("simular_modelos", false);
+  auto execution_status = node->create_publisher<std_msgs::msg::String>("/manipulacion/estado", 10);
 
   // Factory para registrar nodos personalizados
   BT::BehaviorTreeFactory factory;
@@ -64,6 +67,10 @@ int main(int argc, char ** argv)
       // El árbol todavía está ejecutándose
       rate.sleep();
     } else if (status == BT::NodeStatus::SUCCESS) {
+      std_msgs::msg::String message;
+      message.data = node->get_parameter("simular_modelos").as_bool() ?
+        "Simulación completada" : "Secuencia completada";
+      execution_status->publish(message);
       RCLCPP_INFO(node->get_logger(), "Interaction completed successfully!");
       break;
     } else if (status == BT::NodeStatus::FAILURE) {
@@ -72,6 +79,8 @@ int main(int argc, char ** argv)
     }
   }
 
+  // Cancelar un modelo en curso antes de destruir el árbol o cerrar ROS.
+  tree.haltTree();
   rclcpp::shutdown();
   return status == BT::NodeStatus::SUCCESS ? 0 : 1;
 }

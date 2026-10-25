@@ -21,11 +21,13 @@ include_directories(include)
 
 # BT node implementations library
 add_library(waiter_bt_nodes SHARED
+  src/waiter_bt_nodes/ejecutar_modelo.cpp
   src/waiter_bt_nodes/tomar_pedido.cpp
   src/waiter_bt_nodes/bt_node_registration.cpp
 )
 
 ament_target_dependencies(waiter_bt_nodes
+  ament_index_cpp
   rclcpp
   std_msgs
   behaviortree_cpp
@@ -58,6 +60,13 @@ foreach(hri_node pregunta escucha confirma)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${hri_node}
     DESTINATION lib/${PROJECT_NAME})
 endforeach()
+
+ament_python_install_package(binary_tree_manipulation PACKAGE_DIR manipulation)
+configure_file(scripts/model_node.in ${CMAKE_CURRENT_BINARY_DIR}/ejecutar_modelo
+  @ONLY
+  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                   GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ejecutar_modelo DESTINATION lib/${PROJECT_NAME})
 
 # GUI integrada: código Python e imágenes independientes del directorio actual.
 ament_python_install_package(binary_tree_gui PACKAGE_DIR gui)

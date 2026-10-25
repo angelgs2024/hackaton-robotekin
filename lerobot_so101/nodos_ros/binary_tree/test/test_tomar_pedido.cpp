@@ -99,13 +99,12 @@ TEST_F(PedidoTest, ConfirmedOrderPopulatesBlackboard)
   EXPECT_EQ(starts, 1);
 }
 
-TEST_F(PedidoTest, InterfaceOrderPopulatesSameBlackboardWithoutVoiceNodes)
+TEST_F(PedidoTest, InterfaceOrderPopulatesSameBlackboardWithoutRecognition)
 {
   node->declare_parameter<bool>("interface_mode", true);
   reset_sub.reset();
   listen_sub.reset();
   heard_sub.reset();
-  gui_start_sub.reset();
   gui_listen_sub.reset();
   auto tree = makeTree();
   ASSERT_TRUE(waitForStart(tree));
@@ -115,6 +114,16 @@ TEST_F(PedidoTest, InterfaceOrderPopulatesSameBlackboardWithoutVoiceNodes)
   EXPECT_EQ(bb->get<std::string>("food_order"), "sopa");
   EXPECT_EQ(bb->get<std::string>("drink_order"), "cocacola");
   EXPECT_EQ(bb->get<std::string>("order"), "sopa,cocacola");
+}
+
+TEST_F(PedidoTest, InterfaceWaitsForSpeechBeforeStarting)
+{
+  node->declare_parameter<bool>("interface_mode", true);
+  reset_sub.reset();
+  gui_start_sub.reset();
+  auto tree = makeTree(0.1);
+  EXPECT_EQ(result(tree), BT::NodeStatus::FAILURE);
+  EXPECT_EQ(starts, 0);
 }
 
 TEST_F(PedidoTest, GuiDoesNotReplacePreguntaWhileVoiceLoads)

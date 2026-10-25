@@ -92,7 +92,7 @@ class TestComponents(unittest.TestCase):
         self.assertEqual(table.plate.y(), normal_y)
 
     def test_cutlery_follows_dish(self):
-        """Solo muestra cuchara con sopa y cuchillo-tenedor con chuletón."""
+        """Solo muestra cuchara con sopa y tenedor con chuletón."""
         table = AvatarWidget()
         self.assertEqual(table.cutlery._labels["cuchillo"].width(), 240)
         self.assertEqual(table.cutlery._labels["cuchillo"].height(), 160)
@@ -104,7 +104,7 @@ class TestComponents(unittest.TestCase):
 
         table.set_plato("chuleton")
         self.assertTrue(table.cutlery._labels["cuchara"].isHidden())
-        self.assertFalse(table.cutlery._labels["cuchillo"].isHidden())
+        self.assertTrue(table.cutlery._labels["cuchillo"].isHidden())
         self.assertFalse(table.cutlery._labels["tenedor"].isHidden())
 
     def test_drink_catalog_loads_new_assets(self):

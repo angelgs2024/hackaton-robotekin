@@ -24,9 +24,11 @@ fi
 source "$hri_workspace/install/setup.bash"
 
 hri_interface=false
+hri_test=false
 hri_args=()
 for hri_arg in "$@"; do
     case "$hri_arg" in
+        test) hri_test=true ;;
         --interface) hri_interface=true ;;
         --keyboard)
             echo 'El modo teclado se ha eliminado. Usa --interface para elegir el pedido en la ventana.' >&2
@@ -34,6 +36,11 @@ for hri_arg in "$@"; do
         *) hri_args+=("$hri_arg") ;;
     esac
 done
+
+if "$hri_test"; then
+    echo 'Modo test: HRI activo; los movimientos solo se imprimen en la terminal.'
+    hri_args+=("simular_modelos:=true")
+fi
 
 exec ros2 launch binary_tree waiter_behavior.py \
     "interface:=$hri_interface" \

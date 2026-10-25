@@ -1,20 +1,22 @@
-# Behavior tree con HRI integrado
+# Behavior tree con HRI y modelos LeRobot
 
-Este paquete ejecuta únicamente la toma de pedidos: un árbol C++ con la acción
-`TomarPedido` y los tres nodos Python de HRI. Para llevarlo
+Este paquete toma el pedido mediante HRI o la interfaz y ejecuta después los
+modelos LeRobot correspondientes, en secuencia. Para llevarlo
 a otro workspace, copia **toda la carpeta `binary_tree`** a su directorio `src`.
 No necesita el paquete ROS `hri` ni `hri_example` para compilar o ejecutar.
 
 ```text
 binary_tree/
   hri/                       # pregunta.py, escucha.py, confirma.py, menu.py
+  manipulation/              # validación y ejecución de políticas LeRobot
   gui/                       # interfaz PyQt6: ventana, componentes, estilos y rutas
   assets/images/             # fondo, platos, bebidas y cubiertos
   test/gui/                  # pruebas de la interfaz
   scripts/hri_node.in         # genera los tres ejecutables ROS al compilar
   include/binary_tree/waiter_bt_nodes/tomar_pedido.hpp
   src/waiter_bt_nodes/tomar_pedido.cpp
-  config/waiter_behavior_tree.xml
+  config/waiter_behavior_tree.xml # secuencia HRI → vaso → cubiertos
+  config/lerobot_models.xml       # nombres/rutas de modelos y comando LeRobot
   launch/hri.launch.py
   launch/waiter_behavior.py
 ```
@@ -38,7 +40,9 @@ Con `--interface`, selecciona una comida (chuletón o sopa) y una bebida (agua
 o Coca-Cola). **Confirmar Comanda** se habilita únicamente cuando están ambas
 seleccionadas. Elegir «Plato vacío» o «Vaso vacío» vuelve a deshabilitarlo.
 Al confirmar se publica un único pedido y se guarda en la misma blackboard
-que en modo voz. Este modo no carga Vosk ni Piper y no usa el micrófono.
+que en modo voz. El robot saluda, pregunta por la comida o bebida que falta
+y confirma en voz alta mediante Piper. Este modo no carga Vosk ni usa el micrófono;
+las respuestas y la confirmación se hacen con los botones.
 El antiguo argumento de teclado se ha eliminado.
 
 `pixi run gui` también abre el programa completo en modo botones. La ventana
@@ -57,11 +61,100 @@ pixi run test
 
 La interfaz recibe `/hri/seleccion` para mostrar el pedido provisional y
 `/hri/pedido` para mostrar el confirmado. En modo botones publica directamente
-`/hri/pedido`. Las imágenes representan la selección; no se envían órdenes al brazo.
+`/hri/pedido`. Tras confirmar, el árbol ejecuta la manipulación; la ventana
+muestra su progreso en el estado del brazo mediante `/manipulacion/estado`.
 
 `hri/` se instala como módulo Python `binary_tree_hri` dentro del mismo paquete
-ROS `binary_tree`. El árbol predeterminado contiene solo `TomarPedido` y termina
-cuando el pedido está confirmado y guardado en la blackboard, o si falla la acción.
+ROS `binary_tree`. `TomarPedido` guarda el pedido confirmado en la blackboard
+y la secuencia continúa con los modelos de vasos y cubiertos.
+
+## Configurar y ejecutar los modelos
+
+Edita **`config/lerobot_models.xml`**. En cada `<model>`, `policy` es el nombre
+`usuario/modelo` de Hugging Face o la ruta local de la política (`pretrained_model`).
+Las rutas relativas deben empezar por `./` o `../`; se resuelven desde el XML.
+
+La secuencia actual requiere las políticas de vaso amarillo, tenedor y cuchara,
+que están vacías para que pongas sus nombres reales. La entrada de cuchillo
+se conserva en el catálogo, pero no se valida ni ejecuta en los pedidos.
+Por ejemplo:
+
+```xml
+<model id="coger_tenedor" policy="/ruta/al/modelo_tenedor"
+       task="Pick up the fork and place it next to the plate" duration="60"/>
+```
+
+El bloque `<command>` conserva los parámetros de vuestro `lerobot-rollout`:
+SO101 en `/dev/ttyACM1`, ID `follower_robotekin`, calibración bajo `/home/daviluud`,
+cámara `top` en `/dev/video6`, `wrist` en `/dev/video4`, ambas a 640×480 y 30 FPS,
+`n_action_steps=1`, `temporal_ensemble_coeff=0.01` y `display_data=false`.
+Se ejecuta con el mismo Python del paquete mediante `-m lerobot.scripts.lerobot_rollout`.
+Cada `<arg>` contiene un argumento completo; no pongas comillas de shell alrededor
+del mapa de cámaras. Ajusta estas rutas si lo ejecutas en otra máquina.
+
+La secuencia definida en `config/waiter_behavior_tree.xml` es:
+
+| Pedido | Modelos ejecutados, en orden |
+| --- | --- |
+| Chuletón y agua | Vaso amarillo → tenedor |
+| Chuletón y Coca-Cola | Vaso amarillo → tenedor |
+| Sopa y agua | Vaso amarillo → cuchara |
+| Sopa y Coca-Cola | Vaso amarillo → cuchara |
+
+Tras HRI, `PrepararModelos` comprueba la configuración de todos los pasos del
+pedido antes de arrancar el primero. Si falta una política o una ruta local,
+la secuencia falla sin ejecutar modelos. `EjecutarModelo` permanece en `RUNNING`
+hasta que su proceso acaba; solo entonces arranca el siguiente.
+Un fallo interrumpe la secuencia, sin saltar a otra bebida ni a otros cubiertos.
+
+Antes de cada vaso o cubierto, el árbol espera **5 segundos** con un nodo
+`Delay delay_msec="5000"`, también en modo `test`. Esta espera no bloquea la
+interfaz y se cancela al cerrar el programa.
+
+Cada ejecución usa `duration="60"` segundos de control por defecto, como en el
+comando proporcionado. Ajusta la duración y la tarea de cada política en el XML.
+El final del paso se determina por la salida correcta de LeRobot, **no por una
+comprobación visual de que haya cogido el objeto**. La carga del modelo también
+cuenta para `model_timeout` (300 segundos por defecto). Cerrar la ventana o
+cancelar el árbol detiene el proceso en curso y no ejecuta los siguientes.
+
+Con los modelos configurados, los comandos habituales ejecutan el pedido completo:
+
+```bash
+pixi run pedido
+pixi run pedido --interface
+```
+
+Para comprobar la selección y el orden **sin cargar modelos ni conectar al brazo**,
+incluso antes de rellenar los nombres:
+
+```bash
+pixi run pedido test               # interfaz + HRI por voz
+pixi run pedido test --interface   # elegir el pedido mediante botones
+```
+
+En modo `test`, el robot pregunta y confirma por voz normalmente. Al confirmar
+«chuletón y agua», la terminal muestra, en orden:
+
+```text
+[SIMULACIÓN] Cojo vaso amarillo
+[SIMULACIÓN] Cojo tenedor
+```
+
+No se ejecutan políticas ni se esperan los 60 segundos de cada movimiento.
+Sí se mantienen los 5 segundos de espera antes de imprimir cada acción.
+El modo `test` fuerza la simulación aunque se pase `simular_modelos:=false`.
+También sigue disponible el argumento ROS `simular_modelos:=true`.
+
+Puedes indicar otro XML y otro tiempo máximo:
+
+```bash
+pixi run pedido --interface modelos_xml:=/ruta/lerobot_models.xml model_timeout:=300.0
+```
+
+Las pruebas `pixi run test` usan simulación o procesos de prueba; no ejecutan
+políticas reales. Cubren las cuatro combinaciones, el orden de finalización,
+modelos pendientes, errores, tiempos agotados y cancelación.
 
 ## Tomar un pedido por voz
 
@@ -122,10 +215,11 @@ pixi run pedido-build
              pedido="{order}" timeout="120"/>
 ```
 
-La acción espera a la interfaz y, en modo voz, a los tres nodos HRI;
+La acción espera a la interfaz y al nodo de voz `pregunta`; en modo voz espera
+también a `escucha` y `confirma`;
 publica `/hri/empezar` y permanece en
 `RUNNING` hasta recibir `/hri/pedido`. Solo el pedido confirmado produce
-`SUCCESS`. Un mensaje mal formado o superar `timeout` segundos produce `FAILURE`.
+`SUCCESS` en `TomarPedido`; después se ejecutan los modelos. Un mensaje mal formado o superar `timeout` segundos produce `FAILURE`.
 El plazo incluye la espera al arranque de HRI.
 
 Para `chuleton,agua`, escribe estas cadenas en la blackboard compartida del árbol:
@@ -148,7 +242,8 @@ ejecución anterior. Se vacían las salidas al comenzar y `confirma` reinicia su
 datos al recibir `/hri/empezar`.
 
 Usar una sola conversación a la vez: los tópicos son globales. Detener la acción
-BT deja de aceptar resultados, pero no interrumpe audio que ya está en curso.
+BT deja de aceptar resultados y cancela el modelo en curso. Cerrar la ventana
+cierra también los nodos HRI.
 
 ## Compilar y ejecutar
 

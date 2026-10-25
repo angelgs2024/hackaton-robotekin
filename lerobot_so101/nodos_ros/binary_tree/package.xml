@@ -3,7 +3,7 @@
 <package format="3">
   <name>binary_tree</name>
   <version>1.0.0</version>
-  <description>Behavior tree para tomar pedidos con HRI y guardar los resultados en la blackboard</description>
+  <description>Behavior tree para tomar pedidos con HRI y ejecutar modelos LeRobot en secuencia</description>
   <maintainer email="rodrigo.perez@urjc.es">Roi</maintainer>
   <license>Apache-2.0</license>
 

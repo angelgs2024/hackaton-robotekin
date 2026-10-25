@@ -63,7 +63,8 @@ BT::NodeStatus TomarPedido::onRunning()
   const bool interface_mode = node_->get_parameter("interface_mode").as_bool();
   // Voice mode also includes the GUI subscribers; they must not stand in for
   // pregunta/escucha while the audio models are still loading.
-  const bool input_ready = interface_mode ? empezar_->get_subscription_count() >= 1 :
+  // Buttons also need pregunta ready so the initial spoken greeting is not lost.
+  const bool input_ready = interface_mode ? empezar_->get_subscription_count() >= 2 :
     (empezar_->get_subscription_count() >= 3 &&
     node_->count_subscribers("/hri/escuchar") >= 2 &&
     node_->count_subscribers("/hri/oido") > 0);
