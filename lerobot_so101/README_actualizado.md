@@ -17,7 +17,8 @@ El repositorio también incluye una interfaz gráfica de demostración en PyQt6
 con una mesa, una carta visual y estados del micrófono y del brazo.
 
 El entorno completo se gestiona con [Pixi](https://pixi.sh/) y está fijado por
-[`pixi.lock`](pixi.lock). La plataforma declarada actualmente es Linux x86_64.
+[`pixi.lock`](lerobot_so101/pixi.lock). La plataforma declarada actualmente es
+Linux x86_64.
 
 ## Índice
 
@@ -38,22 +39,21 @@ El entorno completo se gestiona con [Pixi](https://pixi.sh/) y está fijado por
 
 El sistema está compuesto por dos superficies principales:
 
-1. **GUI de demostración** (`MAIN/`): aplicación PyQt6 para seleccionar plato y
+1. **GUI de demostración** (`lerobot_so101/MAIN/`): aplicación PyQt6 para seleccionar plato y
    bebida, confirmar una comanda y mostrar el estado visual del sistema.
-2. **Flujo ROS 2** (`nodos_ros/binary_tree/`): paquete ROS 2 Jazzy que integra
+2. **Flujo ROS 2** (`lerobot_so101/nodos_ros/binary_tree/`): paquete ROS 2 Jazzy que integra
    los nodos HRI en Python con un árbol de comportamiento C++ basado en
    BehaviorTree.CPP. La acción `TomarPedido` espera una comanda confirmada y
    escribe sus partes en la blackboard.
 
-También se conserva [`hri_ros2/`](hri_ros2/) como paquete HRI ROS 2 autónomo de
-referencia. El paquete que usa el flujo actual de `pedido` es el HRI integrado
-en `nodos_ros/binary_tree/hri/`.
+El flujo ejecutable utiliza el HRI integrado en
+[`lerobot_so101/nodos_ros/binary_tree/hri/`](lerobot_so101/nodos_ros/binary_tree/hri/).
 
 ## Estado y alcance
 
 | Área | Estado | Descripción |
 | --- | --- | --- |
-| Entorno | ✅ Listo | Pixi con dependencias bloqueadas en `pixi.lock` |
+| Entorno | ✅ Listo | Pixi con dependencias bloqueadas en `lerobot_so101/pixi.lock` |
 | GUI | ✅ Lista | Selección visual de plato y bebida con PyQt6 |
 | HRI por teclado | ✅ Lista | Conversación completa sin micrófono |
 | HRI por voz | ✅ Lista | Vosk para STT y Piper para TTS local |
@@ -92,8 +92,9 @@ Pixi instala en el entorno:
 - PyQt6, NumPy, MuJoCo, LeRobot y `so101-nexus`.
 - Audio (`sounddevice`, PortAudio), reconocimiento Vosk y síntesis Piper.
 
-Las versiones exactas resueltas están en [`pixi.lock`](pixi.lock); las
-restricciones y tareas declaradas están en [`pixi.toml`](pixi.toml).
+Las versiones exactas resueltas están en
+[`lerobot_so101/pixi.lock`](lerobot_so101/pixi.lock); las restricciones y tareas
+declaradas están en [`lerobot_so101/pixi.toml`](lerobot_so101/pixi.toml).
 
 ## Instalación en Ubuntu/Linux
 
@@ -127,7 +128,8 @@ git clone https://github.com/angelgs2024/hackaton-robotekin.git
 cd hackaton-robotekin/lerobot_so101
 ```
 
-Si el repositorio ya está descargado, basta con entrar en `lerobot_so101`.
+Si el repositorio ya está descargado, entra en la carpeta
+`hackaton-robotekin/lerobot_so101`, que contiene el workspace Pixi.
 
 ### 3. Crear el entorno reproducible
 
@@ -135,7 +137,7 @@ Si el repositorio ya está descargado, basta con entrar en `lerobot_so101`.
 pixi install --locked
 ```
 
-`--locked` obliga a respetar [`pixi.lock`](pixi.lock). Para actualizar
+`--locked` obliga a respetar [`pixi.lock`](lerobot_so101/pixi.lock). Para actualizar
 dependencias de forma deliberada, puede usarse `pixi install` sin esa opción y
 revisar los cambios del lockfile.
 
@@ -151,7 +153,8 @@ No es necesario crear un `venv`, instalar ROS 2 desde `/opt/ros` ni ejecutar
 
 ## Ejecución rápida
 
-Todos los comandos siguientes se ejecutan desde `lerobot_so101/`.
+Todos los comandos siguientes se ejecutan desde
+`hackaton-robotekin/lerobot_so101/`.
 
 ### GUI de demostración
 
@@ -161,7 +164,7 @@ pixi run gui
 
 La ventana muestra:
 
-- Fondo del restaurante desde `MAIN/assets/images/restaurant_bg.png`.
+- Fondo del restaurante desde `lerobot_so101/MAIN/assets/images/restaurant_bg.png`.
 - Carta con tres estados de plato: vacío, sopa y plato principal.
 - Carta con tres estados de bebida: vacío, agua y refresco.
 - Plato, bebida y cubiertos posicionados sobre la mesa.
@@ -268,7 +271,7 @@ TomarPedido (árbol C++) -- /hri/empezar --> pregunta
 - **`escucha`**: captura una frase con Vosk y `sounddevice`, o lee una línea
   desde teclado cuando `modo` es `teclado`.
 - **`confirma`**: normaliza texto, reconoce las opciones de
-  [`menu.py`](nodos_ros/binary_tree/hri/menu.py), pregunta por los datos
+  [`menu.py`](lerobot_so101/nodos_ros/binary_tree/hri/menu.py), pregunta por los datos
   faltantes y publica la comanda cuando el usuario confirma.
 - **`waiter_behavior_bt`**: ejecuta el árbol XML, espera a que los nodos HRI
   estén disponibles, publica el inicio de conversación y valida el formato
@@ -298,14 +301,18 @@ valor no vacío a cada lado. El tiempo de espera predeterminado es de 120
 segundos.
 
 Para cambiar la carta, edita
-[`nodos_ros/binary_tree/hri/menu.py`](nodos_ros/binary_tree/hri/menu.py), donde
+[`menu.py`](lerobot_so101/nodos_ros/binary_tree/hri/menu.py), donde
 cada opción tiene un identificador, el nombre hablado y las palabras que se
 reconocen.
 
 ## Árbol de comportamiento
 
+### Diagrama del árbol
+
+![Diagrama del árbol de comportamiento del robot camarero, sin los nodos Delay](behavior_tree.png)
+
 El árbol predeterminado está en
-[`waiter_behavior_tree.xml`](nodos_ros/binary_tree/config/waiter_behavior_tree.xml)
+[`waiter_behavior_tree.xml`](lerobot_so101/nodos_ros/binary_tree/config/waiter_behavior_tree.xml)
 y contiene una única acción:
 
 ```xml
@@ -314,37 +321,32 @@ y contiene una única acción:
 ```
 
 El nodo personalizado está implementado en
-[`tomar_pedido.cpp`](nodos_ros/binary_tree/src/waiter_bt_nodes/tomar_pedido.cpp)
+[`tomar_pedido.cpp`](lerobot_so101/nodos_ros/binary_tree/src/waiter_bt_nodes/tomar_pedido.cpp)
 y registrado mediante
-[`bt_node_registration.cpp`](nodos_ros/binary_tree/src/waiter_bt_nodes/bt_node_registration.cpp).
+[`bt_node_registration.cpp`](lerobot_so101/nodos_ros/binary_tree/src/waiter_bt_nodes/bt_node_registration.cpp).
 Para ampliar el comportamiento, modifica el XML y añade acciones siguiendo los
 patrones de BehaviorTree.CPP y ROS 2 del paquete.
 
 ## Estructura del repositorio
 
 ```text
-lerobot_so101/
-├── pixi.toml                     # Dependencias, constraints y tareas Pixi
-├── pixi.lock                     # Resolución reproducible de versiones
-├── MAIN/
-│   ├── main.py                   # Entrada de la GUI
-│   ├── assets/images/            # Fondo, platos, bebidas y cubiertos
-│   ├── src/gui/
-│   │   ├── main_window.py       # Ventana y flujo de confirmación
-│   │   ├── styles.py             # Estilos QSS y localización de recursos
-│   │   ├── params.py             # Offsets de los elementos de la mesa
-│   │   └── components/           # Menú, mesa, plato, bebida, cubiertos y estado
-│   └── tests/                    # Pruebas PyQt6 headless
-├── nodos_ros/binary_tree/
-│   ├── hri/                      # pregunta, escucha, confirma y menú
-│   ├── src/                      # Ejecutable BT y acción TomarPedido
-│   ├── include/                  # Cabeceras C++
-│   ├── config/                   # Árbol XML
-│   ├── launch/                   # Lanzamientos ROS 2
-│   ├── scripts/                  # Modelos, audio y wrappers HRI
-│   └── test/                     # Pruebas GTest de la acción
-├── hri_ros2/                     # Paquete HRI ROS 2 independiente de referencia
-└── extra/                        # Documentación histórica y de diseño
+hackaton-robotekin/
+└── lerobot_so101/
+    ├── pixi.toml                 # Dependencias, constraints y tareas Pixi
+    ├── pixi.lock                 # Resolución reproducible de versiones
+    ├── MAIN/
+    │   ├── main.py               # Entrada de la GUI
+    │   ├── assets/images/        # Fondo, platos, bebidas y cubiertos
+    │   ├── src/gui/              # Ventana, estilos y componentes
+    │   └── tests/                # Pruebas PyQt6 headless
+    └── nodos_ros/binary_tree/
+        ├── hri/                  # pregunta, escucha, confirma y menú
+        ├── src/                  # Ejecutable BT y acción TomarPedido
+        ├── include/              # Cabeceras C++
+        ├── config/               # Árbol XML
+        ├── launch/               # Lanzamientos ROS 2
+        ├── scripts/              # Modelos, audio y wrappers HRI
+        └── test/                 # Pruebas GTest de la acción
 ```
 
 ## Pruebas
@@ -358,7 +360,7 @@ ventana visible:
 pixi run test
 ```
 
-Esto ejecuta [`MAIN/tests/run_tests.py`](MAIN/tests/run_tests.py), que descubre
+Esto ejecuta [`run_tests.py`](lerobot_so101/MAIN/tests/run_tests.py), que descubre
 las pruebas de estilos, componentes y ventana principal.
 
 También se puede ejecutar directamente:
@@ -378,14 +380,15 @@ pixi run bash -c 'cd nodos_ros && colcon test-result --verbose'
 ```
 
 Las pruebas de
-[`test_tomar_pedido.cpp`](nodos_ros/binary_tree/test/test_tomar_pedido.cpp)
+[`test_tomar_pedido.cpp`](lerobot_so101/nodos_ros/binary_tree/test/test_tomar_pedido.cpp)
 comprueban pedidos válidos, pedidos mal formados, timeouts, limpieza de la
 blackboard y descarte de mensajes pendientes de una conversación anterior.
 
 ## Desarrollo y mantenimiento
 
-- Añade o modifica dependencias en [`pixi.toml`](pixi.toml) y actualiza
-  `pixi.lock` de forma intencionada.
+- Añade o modifica dependencias en
+  [`pixi.toml`](lerobot_so101/pixi.toml) y actualiza
+  [`pixi.lock`](lerobot_so101/pixi.lock) de forma intencionada.
 - Mantén el uso de `pixi run` para que Python, ROS 2 y CMake provengan del
   mismo entorno.
 - Después de modificar código C++ o archivos ROS 2, vuelve a ejecutar
@@ -425,10 +428,13 @@ La GUI necesita un servidor gráfico. En servidores o CI, ejecuta solo
 
 ## Licencia
 
-El paquete ROS 2 `binary_tree` declara Apache-2.0 y el paquete HRI heredado de
-[`hri_ros2`](hri_ros2/) declara MIT. El repositorio no contiene un archivo de
-licencia global; consulta las declaraciones de cada paquete antes de
-redistribuir componentes.
+Este proyecto se distribuye bajo la
+[Apache License 2.0](LICENSE). Consulta el archivo [`LICENSE`](LICENSE) para
+conocer los términos completos.
+
+La licencia permite usar, estudiar, modificar y redistribuir el software,
+incluido su uso comercial, siempre que se cumplan sus condiciones de
+redistribución, avisos de copyright, licencia y cambios realizados.
 
 
 
